@@ -35,24 +35,7 @@ public final class App {
                 return;
             }
 
-            try (Connection db = ds.getConnection()) {
-                try (PreparedStatement query =
-                             db.prepareStatement("select i.sname from indiv i where id = (select id from indiv_code where code = ?)"
-                             ))
-                {
-                    query.setString(1, code);
-                    ResultSet rs = query.executeQuery();
-                    while (rs.next()) {
-                        System.out.println(rs.getString(1));
-                    }
-                    rs.close();
-                }
-            } catch (SQLException ex) {
-                System.out.println("Database connection failure: "
-                        + ex.getMessage());
-            }
-
-
+            printIndivBySnils(ds, code);
 
             finishLatch.countDown();
         };
@@ -85,5 +68,26 @@ public final class App {
                     + ex.getMessage());
         }
         return code;
+    }
+
+    private static void printIndivBySnils(HikariDataSource ds, String snils) {
+        try (Connection db = ds.getConnection()) {
+            try (PreparedStatement query =
+                         db.prepareStatement("select coalesce(\n" +
+                                 "               (select sname from indiv i where i.id  = (select indiv_id from indiv_code ic where ic.code = ? and type_id = 1)), 'indiv not found'\n" +
+                                 "           )"
+                         ))
+            {
+                query.setString(1, snils);
+                ResultSet rs = query.executeQuery();
+                while (rs.next()) {
+                    System.out.println(rs.getString(1));
+                }
+                rs.close();
+            }
+        } catch (SQLException ex) {
+            System.out.println("Database connection failure: "
+                    + ex.getMessage());
+        }
     }
 }
