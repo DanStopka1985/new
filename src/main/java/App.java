@@ -25,6 +25,7 @@ public final class App {
         CountDownLatch finishLatch = new CountDownLatch(NO_THREADS);
 
         Runnable readingThread = () -> {
+            String code = "test";
             startLatch.countDown();
             try {
                 startLatch.await();
@@ -33,20 +34,16 @@ public final class App {
                         + ex.getMessage());
                 return;
             }
+
+
             try (Connection db = ds.getConnection()) {
                 try (PreparedStatement query =
-                             db.prepareStatement("" +
-
-                                     "select sname, fname, mname, bdate, g.name, snils.code from indiv i\n" +
-                                     "join gender g on g.id = i.gender_id\n" +
-                                     "join indiv_code snils on snils.indiv_id = i.id and snils.type_id in (select id from indiv_code_type where code = 'SNILS')\n" +
-                                     "order by snils.code limit 30"
-
+                             db.prepareStatement("select code from indiv_code where id = (select (random() * max(id))::int from indiv_code)"
                              ))
                 {
                     ResultSet rs = query.executeQuery();
                     while (rs.next()) {
-                        //System.out.println(String.format("%s, %s!", rs.getString(1), rs.getString(2)));
+                        code = rs.getString(1);
                     }
                     rs.close();
                 }
@@ -54,6 +51,26 @@ public final class App {
                 System.out.println("Database connection failure: "
                         + ex.getMessage());
             }
+
+            try (Connection db = ds.getConnection()) {
+                try (PreparedStatement query =
+                             db.prepareStatement("select i.sname from indiv i where id = (select id from indiv_code where code = ?)"
+                             ))
+                {
+                    query.setString(1, code);
+                    ResultSet rs = query.executeQuery();
+                    while (rs.next()) {
+                        System.out.println(rs.getString(1));
+                    }
+                    rs.close();
+                }
+            } catch (SQLException ex) {
+                System.out.println("Database connection failure: "
+                        + ex.getMessage());
+            }
+
+
+
             finishLatch.countDown();
         };
 
