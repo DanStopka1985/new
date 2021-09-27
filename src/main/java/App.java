@@ -38,7 +38,7 @@ public final class App {
                              db.prepareStatement("" +
 
                                      "select sname, fname, mname, bdate, g.name, snils.code from indiv i\n" +
-                                     "join gender g on g.id = i.gender_id and g.name = 'Мужской'\n" +
+                                     "join gender g on g.id = i.gender_id\n" +
                                      "join indiv_code snils on snils.indiv_id = i.id and snils.type_id in (select id from indiv_code_type where code = 'SNILS')\n" +
                                      "order by snils.code limit 30"
 
