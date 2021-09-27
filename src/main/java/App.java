@@ -25,7 +25,7 @@ public final class App {
         CountDownLatch finishLatch = new CountDownLatch(NO_THREADS);
 
         Runnable readingThread = () -> {
-            String code = "test";
+            String code = getRandomCode(ds);
             startLatch.countDown();
             try {
                 startLatch.await();
@@ -33,23 +33,6 @@ public final class App {
                 System.out.println("Synchronization failure: "
                         + ex.getMessage());
                 return;
-            }
-
-
-            try (Connection db = ds.getConnection()) {
-                try (PreparedStatement query =
-                             db.prepareStatement("select code from indiv_code where id = (select (random() * max(id))::int from indiv_code)"
-                             ))
-                {
-                    ResultSet rs = query.executeQuery();
-                    while (rs.next()) {
-                        code = rs.getString(1);
-                    }
-                    rs.close();
-                }
-            } catch (SQLException ex) {
-                System.out.println("Database connection failure: "
-                        + ex.getMessage());
             }
 
             try (Connection db = ds.getConnection()) {
@@ -81,5 +64,26 @@ public final class App {
         finishLatch.await();
         System.out.println("All reading thread complete.");
 
+    }
+
+
+    private static String getRandomCode(HikariDataSource ds){
+        String code = "";
+        try (Connection db = ds.getConnection()) {
+            try (PreparedStatement query =
+                         db.prepareStatement("select code from indiv_code where id = (select (random() * max(id))::int from indiv_code)"
+                         ))
+            {
+                ResultSet rs = query.executeQuery();
+                while (rs.next()) {
+                    code = rs.getString(1);
+                }
+                rs.close();
+            }
+        } catch (SQLException ex) {
+            System.out.println("Database connection failure: "
+                    + ex.getMessage());
+        }
+        return code;
     }
 }
