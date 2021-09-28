@@ -25,7 +25,7 @@ public final class App {
         CountDownLatch finishLatch = new CountDownLatch(NO_THREADS);
 
         Runnable readingThread = () -> {
-            String code = getRandomCode(ds);
+
             startLatch.countDown();
             try {
                 startLatch.await();
@@ -35,7 +35,8 @@ public final class App {
                 return;
             }
 
-            printIndivBySnils(ds, code);
+            String code = getRandomSnilsPart(ds);
+            printIndivsBySnilsPart(ds, code);
 
             finishLatch.countDown();
         };
@@ -49,12 +50,11 @@ public final class App {
 
     }
 
-
-    private static String getRandomCode(HikariDataSource ds){
+    private static String getRandomSnilsPart(HikariDataSource ds){
         String code = "";
         try (Connection db = ds.getConnection()) {
             try (PreparedStatement query =
-                         db.prepareStatement("select code from indiv_code where id = (select (random() * max(id))::int from indiv_code)"
+                         db.prepareStatement("select substr(code, 2, 8) from indiv_code where id = (select (random() * max(id))::int from indiv_code);"
                          ))
             {
                 ResultSet rs = query.executeQuery();
@@ -70,15 +70,17 @@ public final class App {
         return code;
     }
 
-    private static void printIndivBySnils(HikariDataSource ds, String snils) {
+    private static void printIndivsBySnilsPart(HikariDataSource ds, String snils_part) {
         try (Connection db = ds.getConnection()) {
             try (PreparedStatement query =
-                         db.prepareStatement("select coalesce(\n" +
-                                 "               (select sname from indiv i where i.id  = (select indiv_id from indiv_code ic where ic.code = ? and type_id = 1)), 'indiv not found'\n" +
-                                 "           )"
+                         db.prepareStatement
+                                 ("select 'founded indivs by snils_part ' || ? || ': ' || coalesce((select string_agg(sname, ', ') from indiv i where i.id in " +
+                                         "(select indiv_id from indiv_code ic where ic.code like '%' || ? || '%' and type_id = 1)), 'nothing');"
                          ))
             {
-                query.setString(1, snils);
+                query.setString(1, snils_part);
+                query.setString(2, snils_part);
+
                 ResultSet rs = query.executeQuery();
                 while (rs.next()) {
                     System.out.println(rs.getString(1));
