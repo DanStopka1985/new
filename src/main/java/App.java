@@ -20,7 +20,6 @@ public final class App {
         config.setConnectionTimeout(60000);
         HikariDataSource ds = new HikariDataSource(config);
 
-
         CountDownLatch startLatch = new CountDownLatch(NO_THREADS);
         CountDownLatch finishLatch = new CountDownLatch(NO_THREADS);
 
@@ -35,18 +34,10 @@ public final class App {
             }
             try (Connection db = ds.getConnection()) {
                 try (PreparedStatement query =
-                             db.prepareStatement("" +
-
-                                     "select sname, fname, mname, bdate, g.name, snils.code from indiv i\n" +
-                                     "join gender g on g.id = i.gender_id\n" +
-                                     "join indiv_code snils on snils.indiv_id = i.id and snils.type_id in (select id from indiv_code_type where code = 'SNILS')\n" +
-                                     "order by snils.code limit 30"
-
-                             ))
+                             db.prepareStatement("select"))
                 {
                     ResultSet rs = query.executeQuery();
                     while (rs.next()) {
-                        //System.out.println(String.format("%s, %s!", rs.getString(1), rs.getString(2)));
                     }
                     rs.close();
                 }
