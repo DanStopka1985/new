@@ -83,8 +83,21 @@ select pg_get_indexdef('indiv_code_idx'::regclass);
 
 
 
-
+--drop index indiv_code_hash_idx;
 create index indiv_code_hash_idx on indiv_code using hash (code);
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+select pg_size_pretty(pg_table_size('indiv_code_hash_idx')) hash, pg_size_pretty(pg_table_size('indiv_code_idx')) btree;
+--drop index indiv_code_hash_idx;
