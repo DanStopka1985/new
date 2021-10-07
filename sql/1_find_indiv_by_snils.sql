@@ -31,7 +31,7 @@ select coalesce(
 
 
 
-explain--(verbose, analyse, buffers)
+explain(verbose, analyse, buffers)
 select coalesce(
    (select concat_ws(' ', sname, fname, mname) from indiv i
     where i.id  = (select indiv_id from indiv_code ic where ic.code = 'd0cd20f38f1c73cde6db4b8ce2fcffd6' and type_id = 1)),
