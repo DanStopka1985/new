@@ -1,8 +1,12 @@
+
+create index indiv_code_idx on indiv_code(code);
+drop index indiv_code_idx
+
 explain(verbose, analyze, buffers)
-select * from indiv_code where code = '85ba4c000e993993b81aa453cf45e541' and type_id = 1
+select 'founded indivs by snils_part  : ' || coalesce((select string_agg(sname, ', ') from indiv i where i.id in
+                                         (select indiv_id from indiv_code ic where ic.code like '123' || '%' and type_id = 1)), 'nothing')
 
 
-alter table indiv_code add constraint uniq_code_type unique (code, type_id)
-
-
-select code, count(*) from indiv_code group by code having count(1)>1
+--SET max_parallel_workers_per_gather = 0;
+explain(verbose, analyze, buffers)
+select * from indiv_code ic where ic.type_id = 1 order by code limit 50
