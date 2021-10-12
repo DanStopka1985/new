@@ -1,6 +1,7 @@
 
 create index indiv_code_idx on indiv_code(code);
-drop index indiv_code_idx
+drop index indiv_code_idx;
+drop index indiv_code_hash_idx;
 
 explain(verbose, analyze, buffers)
 select 'founded indivs by snils_part  : ' || coalesce((select string_agg(sname, ', ') from indiv i where i.id in

@@ -8,9 +8,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.IntStream;
-public final class App2 {
+public final class App3 {
     private static final Integer NO_THREADS = 200;
-    private App2() {
+    private App3() {
     }
 
     public static void main(final String[] args) throws InterruptedException {
