@@ -62,39 +62,34 @@ select code from indiv_code order by code limit 50;
 
 
 
-drop index indiv_code_indiv_id_code_idx;
-drop index indiv_code_code_indiv_id_idx;
-drop index indiv_code_indiv_id_code_idx1;
-drop index indiv_code_code_indiv_id_idx1;
-
 create index indiv_code_indiv_id_snils_idx on indiv_code(indiv_id, code) where type_id = 1;
 create index indiv_code_snils_indiv_id_idx on indiv_code(code, indiv_id) where type_id = 1;
 
 explain(verbose, analyze, buffers)
-select indiv_id from indiv_code where type_id = 1 order by code limit 1
-
-explain(verbose, analyze, buffers)
-select indiv_id, code from indiv_code where code like '123%' and type_id = 1 order by code limit 10
-
-
-
-
-
-
-
-
-
+select indiv_id from indiv_code where type_id = 1 order by code limit 10;
 
 explain(verbose, analyze, buffers)
 select sname, fname, mname, bdate, snils.code from indiv i
 join indiv_code snils on snils.indiv_id = i.id and snils.type_id = 1
 order by snils.code
-limit 50
+limit 50;
 
 
 
 
 
+
+
+
+
+
+
+
+
+
+
+explain(verbose, analyze, buffers)
+select indiv_id, code from indiv_code where code like '%561%' and /*code like '0%' and*/ type_id = 1 order by code limit 10
 
 
 
