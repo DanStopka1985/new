@@ -73,8 +73,8 @@ create index indiv_code_snils_indiv_id_idx on indiv_code(code, indiv_id) where t
 explain(verbose, analyze, buffers)
 select indiv_id from indiv_code where type_id = 1 order by code limit 1
 
-
-select indiv_id from indiv_code where code = '123';
+explain(verbose, analyze, buffers)
+select indiv_id, code from indiv_code where code like '123%' and type_id = 1 order by code limit 10
 
 
 
