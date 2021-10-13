@@ -66,7 +66,7 @@ create index indiv_code_indiv_id_snils_idx on indiv_code(indiv_id, code) where t
 create index indiv_code_snils_indiv_id_idx on indiv_code(code, indiv_id) where type_id = 1;
 
 explain(verbose, analyze, buffers)
-select indiv_id from indiv_code where type_id = 1 order by code limit 10;
+select indiv_id, code from indiv_code where type_id = 1 order by code limit 10;
 
 explain(verbose, analyze, buffers)
 select sname, fname, mname, bdate, snils.code from indiv i
