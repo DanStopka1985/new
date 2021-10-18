@@ -31,3 +31,46 @@ drop index temp_id_idx
 explain
 select * from temp where id = 1
 
+
+drop table if exists t1;
+drop table if exists t2;
+create table t1 (code text);
+insert into t1(code)
+select
+    md5(random()::text)
+from generate_series(1, 100000);
+
+create table t2 (code text);
+insert into t2(code)
+select
+    md5(random()::text)
+from generate_series(1, 100000);
+
+explain(verbose, analyze, buffers)
+select * from t1 left join t2 on t1.code = t2.code;
+
+explain(verbose, analyze, buffers)
+select * from t2 order by code limit 10
+
+create index t1_code on t1(code text_pattern_ops);
+create index t2_code on t2(code text_pattern_ops);
+
+explain(verbose, analyze, buffers)
+select * from t1 join t2 on t1.code = t2.code;
+
+cluster verbose t1 using t1_code;
+cluster verbose t2 using t2_code;
+
+explain(verbose, analyze, buffers)
+select * from t1 left join t2 on t1.code = t2.code;
+
+analyze t1;
+
+analyze t2;
+
+explain(verbose, analyze, buffers)
+select * from t1 left join t2 on t1.code = t2.code
+order by t1.code limit 10
+
+select * from pg_settings where name ilike '%seq%'
+set enable_seqscan = on
