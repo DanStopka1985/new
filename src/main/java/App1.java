@@ -8,6 +8,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.IntStream;
+
+//Эмуляция поиска по случайному коду для 200 условных пользователей
 public final class App1 {
     private static final Integer NO_THREADS = 200;
     private App1() {
@@ -25,6 +27,7 @@ public final class App1 {
         CountDownLatch finishLatch = new CountDownLatch(NO_THREADS);
 
         Runnable readingThread = () -> {
+            //Случайный выбор кода для поиска
             String code = getRandomCode(ds);
             startLatch.countDown();
             try {
@@ -35,6 +38,7 @@ public final class App1 {
                 return;
             }
 
+            //Вывод результата поиска для случайного кода
             printIndivBySnils(ds, code);
 
             finishLatch.countDown();
@@ -49,7 +53,7 @@ public final class App1 {
 
     }
 
-
+//Случайный выбор кода для поиска
     private static String getRandomCode(HikariDataSource ds){
         String code = "";
         try (Connection db = ds.getConnection()) {
@@ -70,6 +74,7 @@ public final class App1 {
         return code;
     }
 
+    //Вывод результата поиска для случайного кода
     private static void printIndivBySnils(HikariDataSource ds, String snils) {
         try (Connection db = ds.getConnection()) {
             try (PreparedStatement query =

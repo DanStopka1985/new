@@ -74,3 +74,32 @@ order by t1.code limit 10
 
 select * from pg_settings where name ilike '%seq%'
 set enable_seqscan = on
+
+
+
+select decode(':')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+http://google.com
+file:///C:/PostgreSQL/data/logs/pg11/a.html#time-consuming-queries
+
+
+file:///C:/PostgreSQL/data/logs/pg11/a.html#time-consuming-queries
+*/
+
