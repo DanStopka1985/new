@@ -58,4 +58,8 @@ select id, 2, md5(random()::text) from indiv;
 
 --Добавляем СНИЛС каждому
 insert into indiv_code(indiv_id, type_id, code)
-select id, 1, md5(random()::text) from indiv;	
+select id, 1, md5(random()::text) from indiv;
+
+
+--Теперь напишем запрос по поиску индивида по СНИЛС
+/* 1_find_indiv_by_snils.sql */
