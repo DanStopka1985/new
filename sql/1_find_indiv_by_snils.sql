@@ -59,7 +59,6 @@ select coalesce(
                               where code = 'd0cd20f38f1c73cde6db4b8ce2fcffd6' and type_id = 1)),
                'indiv not found'
            );
-SET max_parallel_workers_per_gather = 2;
 /*
 Узлы на нажних уровнях дерева (листьях) представляют собой первичные действия алгоритма - обычно это сканирование таблиц, индексов, констант.
 Родительские узлы - следующие действия. И в корне получается результат выполнения запроса.
@@ -89,12 +88,42 @@ select coalesce(
                               where code = 'd0cd20f38f1c73cde6db4b8ce2fcffd6' and type_id = 1)),
                'indiv not found'
            );
-/*Здесь, кроме стоимости можно увидеть время выполнения каждого узла, какие данные узел возвращает и сколько памяти использует
-Можно увидеть, что и по памяти конечный узел */
-
-
-
-
+/*
+Здесь, кроме стоимости можно увидеть время выполнения каждого узла, какие данные узел возвращает и сколько памяти использует
+Shared hit – это количество блоков считанных их кэша Postgres. Размер блока по умолчанию – 8кб.
+Shared read – количество блоков считанных с диска.
+Опять же, в общем случае - чем меньше памяти использует запрос, тем он лучше.
+Можно увидеть, что и по памяти и по времени конечный узел не сильно отличается от корневого.
+Для того, чтобы оптимизировать запрос мы должны изменить план его выполнения.
+Как можно изменить план выполнения? Можно разными способами, например изменением настроек.
+Для примера отключим распараллеливание последовательного сканирования. и перезапустим explain
+*/
+SET max_parallel_workers_per_gather = 0;
+explain(verbose, analyse, buffers)
+select coalesce(
+               (select concat_ws(' ', sname, fname, mname)
+                from indiv i
+                where i.id = (select indiv_id
+                              from indiv_code
+                              where code = 'd0cd20f38f1c73cde6db4b8ce2fcffd6' and type_id = 1)),
+               'indiv not found'
+           );
+/*
+Как видим, план изменился, parallel seq scan и gather превратились в seq scan.
+Это для примера изменения стоимости настройками, план конечно же стал хуже,
+если можно распараллелить - в общем случае, то лучше распараллелить
+Вернем как было
+*/
+SET max_parallel_workers_per_gather = 2;
+explain(verbose, analyse, buffers)
+select coalesce(
+               (select concat_ws(' ', sname, fname, mname)
+                from indiv i
+                where i.id = (select indiv_id
+                              from indiv_code
+                              where code = 'd0cd20f38f1c73cde6db4b8ce2fcffd6' and type_id = 1)),
+               'indiv not found'
+           );
 
 
 
