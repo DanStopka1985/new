@@ -2,18 +2,18 @@
 
 
 --получаем случайный идентификатор индивида
--- (просто получаем случайную строку из идентификаторов без привязки к типу идентификатора)
+-- (просто выбираем случайнымобразом строку из идентификаторов без привязки к типу идентификатора)
 select code
 from indiv_code
 where id = (select (random() * max(id))::int from indiv_code);
 
---ищем полученный код среди имеющихся СНИЛС и достаем индивида
+--и затем ищем полученный код среди имеющихся СНИЛС и получаем индивида
 select coalesce(
                (select concat_ws(' ', sname, fname, mname)
-                from indiv i
-                where i.id = (select indiv_id
-                              from indiv_code ic
-                              where ic.code = '5998ddb21630dfa8ac748ff9d9f96775' and type_id = 1)),
+                from indiv
+                where id = (select indiv_id
+                              from indiv_code
+                              where code = '5998ddb21630dfa8ac748ff9d9f96775' and type_id = 1)),
                'indiv not found'
            );
 
@@ -53,8 +53,8 @@ Buffers говорит об используемой памяти так же д
 explain--(verbose, analyse, buffers)
 select coalesce(
                (select concat_ws(' ', sname, fname, mname)
-                from indiv i
-                where i.id = (select indiv_id
+                from indiv
+                where id = (select indiv_id
                               from indiv_code
                               where code = 'd0cd20f38f1c73cde6db4b8ce2fcffd6' and type_id = 1)),
                'indiv not found'
@@ -82,8 +82,8 @@ COST - стоимость – это относительная величина
 explain(verbose, analyse, buffers)
 select coalesce(
                (select concat_ws(' ', sname, fname, mname)
-                from indiv i
-                where i.id = (select indiv_id
+                from indiv
+                where id = (select indiv_id
                               from indiv_code
                               where code = 'd0cd20f38f1c73cde6db4b8ce2fcffd6' and type_id = 1)),
                'indiv not found'
@@ -95,15 +95,15 @@ Shared read – количество блоков считанных с диск
 Опять же, в общем случае - чем меньше памяти использует запрос, тем он лучше.
 Можно увидеть, что и по памяти и по времени конечный узел не сильно отличается от корневого.
 Для того, чтобы оптимизировать запрос мы должны изменить план его выполнения.
-Как можно изменить план выполнения? Можно разными способами, например изменением настроек.
+Как можно изменить план выполнения? Можно разными способами, например изменением настроек или изменением самого запроса.
 Для примера отключим распараллеливание последовательного сканирования. и перезапустим explain
 */
-SET max_parallel_workers_per_gather = 0;
+set max_parallel_workers_per_gather = 0;
 explain(verbose, analyse, buffers)
 select coalesce(
                (select concat_ws(' ', sname, fname, mname)
-                from indiv i
-                where i.id = (select indiv_id
+                from indiv
+                where id = (select indiv_id
                               from indiv_code
                               where code = 'd0cd20f38f1c73cde6db4b8ce2fcffd6' and type_id = 1)),
                'indiv not found'
@@ -114,7 +114,7 @@ select coalesce(
 если можно распараллелить - в общем случае, то лучше распараллелить
 Вернем как было
 */
-SET max_parallel_workers_per_gather = 2;
+set max_parallel_workers_per_gather = 2;
 explain(verbose, analyse, buffers)
 select coalesce(
                (select concat_ws(' ', sname, fname, mname)
@@ -124,29 +124,71 @@ select coalesce(
                               where code = 'd0cd20f38f1c73cde6db4b8ce2fcffd6' and type_id = 1)),
                'indiv not found'
            );
+/*
+Как мы выяснили, основную сложность алгоритма составляет конечный узел(seq scan), он же выполняется дольше всего и больше всего использует памяти.
+Действительно, чтобы найти подходящие нам строки, необходимо просканировать всю таблицу и проверить выполняется ли условие.
+Для ускорения поиска существуют вспомогательные структуры - индексы. Подобно поиску по оглавлению в книге - если
+оглавления нет и нужно найти какую-то главу по названию, придется просматривать каждую страницу. Если есть оглавление,
+то нужно просмотреть только страницу с оглавлением, найти нужную главу в нем и перейти на указанную страницу.
+В нашем плане уже используется индекс (в узле Index Scan using pk_indiv on indiv) если бы его не было так же пришлось
+бы сканировать всю таблицу.
+Создадим индекс по коду идентификатора индивида
+*/
 
-
-
-
-
-
-
-
-
-
-
-create index if not exists indiv_code_idx on indiv_code (code);
-
-
---просмотреть DDL создания индекса
+create index if not exists indiv_code_idx on indiv_code(code);
+/*И снова выполним explain*/
+explain(verbose, analyse, buffers)
+select coalesce(
+               (select concat_ws(' ', sname, fname, mname)
+                from indiv i
+                where i.id = (select indiv_id
+                              from indiv_code
+                              where code = 'd0cd20f38f1c73cde6db4b8ce2fcffd6' and type_id = 1)),
+               'indiv not found'
+           );
+/*
+План изменился. Теперь вместо сканирования таблицы сканируется наш индекс.
+Изменилось и время выполнения и потребление памяти (было Buffers: shared hit=9346; стало Buffers: shared read=3)
+Но индексы бывают разные, а мы какой создали? В нашем скрипте на создание об этом ничего не сказано - только название и поле.
+*/
+create index if not exists indiv_code_idx on indiv_code(code);
+/*
+Чтобы посмотреть какой у нас индекс, выполним запрос
+*/
 select pg_get_indexdef('indiv_code_idx'::regclass);
 
 
---drop index indiv_code_hash_idx;
+/*
+по умолчанию в postgres создается btree индекс
+ради эксперимента создадим другой индекс на это же поле
+Хэш индекс
+*/
+
 create index indiv_code_hash_idx on indiv_code using hash (code);
+/*И снова выполним explain*/
+explain(verbose, analyse, buffers)
+select coalesce(
+               (select concat_ws(' ', sname, fname, mname)
+                from indiv i
+                where i.id = (select indiv_id
+                              from indiv_code
+                              where code = 'd0cd20f38f1c73cde6db4b8ce2fcffd6' and type_id = 1)),
+               'indiv not found'
+           );
+/*
+Теперь стал использоваться именно хэш индекс
+И по пямяти стало немного лучше. И стоимость меньше. Оптимизатор постгрес пытается выбрать план с наименьшей стоимостью
+Почему же тогда Postgres по умолчанию создает индекс btree, который хуже чем хэш?
+Для разных запросов разные индексы ведут себя по разному, для каких-то запросов определенные индексы вообще не будут работать.
+Postgres не знает какие запросы мы будем выполнять, по этому по умолчанию разработчики выбрали самый универсальный.
+*/
+
+
 
 
 
 select pg_size_pretty(pg_table_size('indiv_code_hash_idx')) hash,
        pg_size_pretty(pg_table_size('indiv_code_idx'))      btree;
 --drop index indiv_code_hash_idx;
+
+--drop index indiv_code_idx
