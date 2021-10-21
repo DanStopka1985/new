@@ -194,3 +194,5 @@ select pg_size_pretty(pg_table_size('indiv_code_hash_idx')) "HASH",
 */
 
 drop index indiv_code_idx;
+
+/* 2_indivs_ordered_by_snils.sql */
