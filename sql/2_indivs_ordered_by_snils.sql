@@ -72,7 +72,7 @@ select code from indiv_code order by code limit 50;
 
 create index indiv_code_snils_indiv_id_idx on indiv_code(code, indiv_id) where type_id = 1;
 /*
-Причем важно, что код должен быть первым в списке поле, так как мы по нему сортируем.
+Причем важно, что код должен быть первым в списке полей, так как мы по нему сортируем!
 запустим explain
 */
 
@@ -123,7 +123,7 @@ limit 50;
 
 
 
-
+хикари, слайды, баджер
 
 
 

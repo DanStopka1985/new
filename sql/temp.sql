@@ -103,3 +103,20 @@ file:///C:/PostgreSQL/data/logs/pg11/a.html#time-consuming-queries
 file:///C:/PostgreSQL/data/logs/pg11/a.html#time-consuming-queries
 */
 
+
+
+
+
+
+
+
+
+explain
+select coalesce(
+   (select concat_ws(' ', sname, fname, mname)
+    from indiv
+    where id = (select indiv_id
+                from indiv_code
+                where code = 'd0cd20f38f1c73cde6db4b8ce2fcffd6' and type_id = 1)),
+   'indiv not found'
+);

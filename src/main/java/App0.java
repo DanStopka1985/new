@@ -9,6 +9,7 @@ import java.sql.Statement;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.IntStream;
 //очистить лог бд
+//рассказ вкратце про хикари
 //Сэмулируем запуск самого простого запроса 200ми условными пользователями. -> запустить
 
 public final class App0 {

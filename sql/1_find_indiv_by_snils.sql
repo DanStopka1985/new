@@ -13,7 +13,7 @@ select coalesce(
                 from indiv
                 where id = (select indiv_id
                               from indiv_code
-                              where code = '5998ddb21630dfa8ac748ff9d9f96775' and type_id = 1)),
+                              where code = '1280b20457d6592affb5fd3da46391b1' and type_id = 1)),
                'indiv not found'
            );
 
