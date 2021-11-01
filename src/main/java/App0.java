@@ -5,12 +5,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.IntStream;
-//очистить лог бд
-//рассказ вкратце про хикари
-//Сэмулируем запуск самого простого запроса 200ми условными пользователями. -> запустить
 
 public final class App0 {
     private static final Integer NO_THREADS = 200;
@@ -38,7 +34,7 @@ public final class App0 {
             }
             try (Connection db = ds.getConnection()) {
                 try (PreparedStatement query =
-                             db.prepareStatement("select  ;"))
+                             db.prepareStatement("select  'test123';"))
                 {
                     ResultSet rs = query.executeQuery();
                     while (rs.next()) {
@@ -61,16 +57,3 @@ public final class App0 {
 
     }
 }
-//Выполнение происходит мгновенно
-//Посмотрим лог БД
-//Как видно - читать и анализировать лог простым просмотром не очень удобно, особенно на реальных данных.
-//Чтобы анализировать лог будем использовать анализатор лога pgbadger.
-//Запустить генерацию отчета pgbadger create.bat
-//В отчете удобно смотреть самые долгие запросы, самые частые, самые долгие суммарно и т.д.
-//Так как лог пустой, наш “select” – самый долгий запрос. Он занимает все позиции top 20 slowest individual queries.
-// Так же можно посмотреть топ суммарных выполнений одинаковых запросов.
-// Наш запрос так же на первом месте, количество запусков 200 как и планировалось. Здесь оптимизировать нечего.
-
-
-//Теперь напишем запрос по поиску индивида по СНИЛС
-/* 1_find_indiv_by_snils.sql */
