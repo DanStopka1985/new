@@ -97,24 +97,8 @@ limit 50;
 и по ним идет index scan индекса первичного ключа индивидов
 Nested loop - это одна из стратегий (алгоритмов) соединения join
 В нашем случае указано, что loops=1 - все происходит в 1 цикл
-
-без наших индексов план общего запроса с сортиовкой был бы таким
 */
 
-drop index indiv_code_snils_indiv_id_idx;
-drop index indiv_code_code_idx;
-
-explain(verbose, analyze, buffers)
-select sname, fname, mname, bdate, snils.code from indiv i
-                                                       join indiv_code snils on snils.indiv_id = i.id and snils.type_id = 1
-order by snils.code
-limit 50;
-
-/*
-Так как у планировщика нет индексов он принимает решение применить Hash Join стратегию для соединения таблиц
-Для этого ему нужно обойти обе таблицы и по сути создать временные хэш индексы для соединения
-После этого отсортировать
-*/
 
 -----------------------------------------------------------------------------------------------------------------------
 
