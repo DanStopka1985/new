@@ -107,7 +107,7 @@ file:///C:/PostgreSQL/data/logs/pg11/a.html#time-consuming-queries
 
 
 
-
+цуац
 
 
 
@@ -120,3 +120,6 @@ select coalesce(
                 where code = 'd0cd20f38f1c73cde6db4b8ce2fcffd6' and type_id = 1)),
    'indiv not found'
 );
+
+
+select * from pg_settings where name ilike '%conf%'
