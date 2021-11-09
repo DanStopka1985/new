@@ -123,3 +123,44 @@ select coalesce(
 
 
 select * from pg_settings where name ilike '%conf%'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    create index indiv_code_snils_indiv_id_idx on indiv_code(code, indiv_id) where type_id = 1;
+
+    explain
+    select indiv_id, code from indiv_code where type_id = 1 order by code limit 50;
+
+
+
+
+create index indiv_code_snils_code_indiv_id_hash on indiv_code using hash (code) where type_id = 1
+
+explain
+select * from indiv_code where type_id = 1 and code = '1'
+
+
+
+
+select CURRENT_CATALOG
