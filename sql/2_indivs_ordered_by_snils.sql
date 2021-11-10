@@ -8,6 +8,7 @@ select indiv_id from indiv_code where type_id = 1
 order by code
 limit 50;
 
+
 /*
 выполняется > 200 мс
 есть shared hits из буфера и shared read с диска - срвсем все плохо
