@@ -10,8 +10,8 @@ limit 50;
 
 
 /*
-выполняется > 200 мс
-есть shared hits из буфера и shared read с диска - срвсем все плохо
+выполняется > 100 мс
+есть shared hits из буфера и shared read с диска - совсем все плохо
 нижний узел опять seq scan
 Для уменьшения количества текста, уберу параллельное сканирование
 */
@@ -42,7 +42,7 @@ order by code
 limit 50;
 /*
 Теперь видно, что при сортировке сканируется индекс, и не полностью, а только 50 записей.
-Сама структура b-tree – это упорядоченное сбалансированное дерево, где элементы уже упорядочены.
+Сама структура b-tree – это упорядоченное сбалансированное дерево, где элементы уже отсортированы.
 Ненадолго вернемся к поиску по ключу.
 */
 
@@ -50,7 +50,7 @@ explain(verbose, analyze, buffers)
 select code from indiv_code where code = '123';
 /*
 А здесь по-прежнему используется хэш индекс
-удалим его для эксперимента и снова explain
+удалим его для эксперимента и снова выполним explain
 */
 drop index indiv_code_hash_idx;
 explain(verbose, analyze, buffers)
@@ -82,77 +82,8 @@ select indiv_id, code from indiv_code where type_id = 1 order by code limit 50;
 
 /*
 Теперь используется index only scan и сортировки вообще нет в плане, так как данные уже отсортированы в индексе, к таблице обращений вообще не происходит.
-Таким образом мы создали ЧАСТИЧНЫЙ, СОСТАВНОЙ, ПОКРЫВАЮЩИЙ индекс
+Таким образом мы создали ЧАСТИЧНЫЙ, СОСТАВНОЙ, ПОКРЫВАЮЩИЙ индекс для нашего запроса
 
 Частичный индекс хорош тем, что он занимает меньше места чем индекс без условий.
 Важно заметить, что если мы хотим использовать частичный индекс, то в запросе обязательно должно быть условие как в индексе.
 */
-
--------------------------------------------------------------------------------------------------------------------------
-
-
-/*
-В полном запросе будет выводиться еще и информация об индивиде, так что с нашим индексом все же будет обращение к таблице
-explain
-*/
-
-explain(verbose, analyze, buffers)
-select sname, fname, mname, bdate, snils.code from indiv i
-join indiv_code snils on snils.indiv_id = i.id and snils.type_id = 1
-order by snils.code
-limit 50;
-
-/*
-в плане берутся первые 50 узлов индекса (в алфавитном порядке СНИЛС), затем из этих узлов берутся indiv_id
-и по ним идет index scan индекса первичного ключа индивидов
-Nested loop - это одна из стратегий (алгоритмов) соединения join
-В нашем случае указано, что loops=1 - все происходит в 1 цикл
-*/
-
-
------------------------------------------------------------------------------------------------------------------------
-
-
-
-
-
-
-explain(verbose, analyze, buffers)
-select indiv_id, code from indiv_code where code like '%561%' and /*code like '0%' and*/ type_id = 1 order by code limit 10
-
-
-
-
-explain(verbose, analyze, buffers)
-select ic.code snils, i.sname from indiv_code ic
-join indiv i on i.id = ic.indiv_id
-where type_id = 1 order by code
-limit 50
-
-
-
-
-drop index indiv_code_code_idx
-create index indiv_code_code_idx on indiv_code(code)
-
-
-
-
-
-
-
-
-
---create index indiv_code_indiv_id_idx on indiv_code(indiv_id)
-drop index indiv_code_indiv_id_idx
-
-drop index indiv_id_idx
-drop index indiv_code_indiv_id_idx
-create index indiv_code_indiv_id_code_idx1 on indiv_code(code, indiv_id) where type_id = 1
-drop index indiv_code_indiv_id_code_idx
-
-select * from pg_settings where name ilike '%hash%'
-
-set enable_hashjoin = on
-
-set enable_mergejoin = on
